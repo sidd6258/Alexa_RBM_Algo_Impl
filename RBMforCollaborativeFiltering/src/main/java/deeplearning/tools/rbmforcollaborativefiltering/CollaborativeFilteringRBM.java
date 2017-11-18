@@ -447,7 +447,7 @@ public class CollaborativeFilteringRBM {
         
     }
 
-    public double predict(String userId, String itemId, PredictionType predictionType) {
+    public DoubleMatrix predict(String userId, String itemId, PredictionType predictionType) {
 
         int userIndex = user2Index.get(userId);
         int itemIndex = feature2Index.get(itemId);
@@ -487,49 +487,59 @@ public class CollaborativeFilteringRBM {
         poshidprobs = Utils.logistic(poshidprobs);
         DoubleMatrix poshidstates = poshidprobs.ge(DoubleMatrix.rand(1, numhid));
         
-        DoubleMatrix negdata = DoubleMatrix.zeros(5, 1);
+        DoubleMatrix negdata = DoubleMatrix.zeros(5, numdims);
+        
+        for(int index=0;index<matrix.getColumns();index++){
 
-        for (int rat = 0; rat < 5; rat++) {
-
-            int rating = rat + 1;
-
-            //get the bias for the specfic visible unit/rating
-            DoubleMatrix vbias = visbiases.get(rating);
-            double bias = vbias.get(0, itemIndex);
-
-            DoubleMatrix wij = Wijk.get(rating);
-
-            double sum = bias;
-            for (int hid = 0; hid < poshidstates.getColumns(); hid++) {
-
-                //if the hidden is turned on, use it
-                if (poshidstates.get(0, hid) > 0.0) {
-
-                    sum += wij.get(itemIndex, hid);
-                }
-            }
-
-            negdata.put(rat, 0, sum);
+	        for (int rat = 0; rat < 5; rat++) {
+	
+	            int rating = rat + 1;
+	
+	            //get the bias for the specfic visible unit/rating
+	            DoubleMatrix vbias = visbiases.get(rating);
+	            double bias = vbias.get(0, index);
+	
+	            DoubleMatrix wij = Wijk.get(rating);
+	
+	            double sum = bias;
+	            for (int hid = 0; hid < poshidstates.getColumns(); hid++) {
+	
+	                //if the hidden is turned on, use it
+	                if (poshidstates.get(0, hid) > 0.0) {
+	
+	                    sum += wij.get(index, hid);
+	                }
+	            }
+	
+	            negdata.put(rat, index, sum);
+	        }
         }
         
         negdata = Utils.softmax(negdata);
         
         if(predictionType.equals(PredictionType.MAX)) {
+        	
+        	DoubleMatrix finalRatings = DoubleMatrix.zeros(1, numdims);
             
+        	
+        	
             int max_index = 0;
             double max_value = negdata.get(0,0);
-            
-            for(int i = 1; i < negdata.getRows(); i++ ) {
-                double current = negdata.get(i,0);
-                if(current > max_value) {
-                    max_index = i;
-                    max_value = current;
-                }
-            }
-            
-            return (max_index + 1)*1.0;
+            for(int index=0;index<matrix.getColumns();index++){
+	            
+	            for(int i = 1; i < negdata.getRows(); i++ ) {
+	                double current = negdata.get(i,index);
+	                if(current > max_value) {
+	                    max_index = i;
+	                    max_value = current;
+	                }
+	            }
+	            finalRatings.put(0,index,(max_index + 1)*1.0);
+	        }
+            return finalRatings;
                        
-        }else if(predictionType.equals(PredictionType.MEAN)) {
+        }
+        else if(predictionType.equals(PredictionType.MEAN)) {
             
             double mean = 0.0;
                        
@@ -539,12 +549,12 @@ public class CollaborativeFilteringRBM {
                 
             }
             
-            return mean;
+            return null;
             
             
         }
         
-        return 0.0;
+        return null;
     }
                 
                    
