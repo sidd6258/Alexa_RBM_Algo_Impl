@@ -381,7 +381,7 @@ public class CollaborativeFilteringRBM {
             Iterator<String> iterator = f.iterator();            
             while (iterator.hasNext()) {
                 String line = iterator.next();
-                String[] splits = line.split("\t");
+                String[] splits = line.split(" ");
 
                 String userId = splits[0];
                 String itemId = splits[1];
