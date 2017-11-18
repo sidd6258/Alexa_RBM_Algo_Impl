@@ -62,7 +62,7 @@ public class DbConnection {
 	            data.add(str);
 	            ++rowCount;
 	         }
-	         writeToFile(data, "booking.txt");
+	         writeToFile(data, "data/booking.txt");
 	         rset.close();
 	         stmt.close();
 	         System.out.println("Total number of records added to file = " + rowCount);
