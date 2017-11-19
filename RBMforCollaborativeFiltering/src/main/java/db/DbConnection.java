@@ -19,7 +19,8 @@ public class DbConnection {
         BufferedWriter out = null;
         try {
                 File file = new File(path);
-                out = new BufferedWriter(new FileWriter(file, true));
+                file.delete();
+                out = new BufferedWriter(new FileWriter(file, false));
                 for (String s : list) {
                         out.write(s);
                         out.newLine();
@@ -30,7 +31,7 @@ public class DbConnection {
         }
 }
 	
-	public static void main(String[] args) throws IOException {
+	public static void RatingsFileGen() throws IOException {
 	      try (
 	         // Step 1: Allocate a database 'Connection' object
 	         Connection conn = (Connection) DriverManager.getConnection(

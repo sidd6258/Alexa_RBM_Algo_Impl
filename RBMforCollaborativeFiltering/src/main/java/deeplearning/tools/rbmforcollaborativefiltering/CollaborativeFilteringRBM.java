@@ -10,7 +10,15 @@ import genutils.BigFile;
 import genutils.Rating;
 import genutils.RbmOptions;
 import genutils.Utils;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -19,7 +27,18 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+
+import org.bson.types.ObjectId;
 import org.jblas.DoubleMatrix;
+
+import com.mongodb.BasicDBObject;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
+import com.mongodb.Mongo;
+import com.mongodb.MongoException;
+import com.mongodb.util.JSON;
 
 /**
  *
@@ -51,9 +70,10 @@ public class CollaborativeFilteringRBM {
     
     DoubleMatrix matrix;    
     HashMap<String, Integer> feature2Index;
+    HashMap<Integer, String> Index2feature;
     HashMap<String, Integer> user2Index;    
     HashMap<Integer, String> index2User;
-    
+    HashMap<String, String> email2userId;
     /**
      * Fits a separate RBM for each user, with 'tied' weights and biases
      * for the hidden and visible units. 
@@ -121,7 +141,7 @@ public class CollaborativeFilteringRBM {
         //train for 'maxepoch' epochs
         for (int epoch = 1; epoch <= rbmOptions.maxepoch; epoch++) {
 
-            _logger.info("Starting epoch " + (epoch + 1) + "\n");
+            _logger.info("Starting epoch " + (epoch) + "\n");
             double errsum = 0;
             
             // randomize the visiting order and then treat
@@ -420,9 +440,11 @@ public class CollaborativeFilteringRBM {
             
             int columnIndex = 0;
             feature2Index = new HashMap<>(items.size());
+            Index2feature = new HashMap<>(items.size());
             for(String item : items) {
                 
                 feature2Index.put(item, columnIndex);
+                Index2feature.put(columnIndex, item);
                 columnIndex++;
             }
                         
@@ -447,7 +469,7 @@ public class CollaborativeFilteringRBM {
         
     }
 
-    public DoubleMatrix predict(String userId, String itemId, PredictionType predictionType) {
+    public Map<String,Map<String,Double>> predict(String userId, String itemId, PredictionType predictionType) throws Exception {
 
         int userIndex = user2Index.get(userId);
         int itemIndex = feature2Index.get(itemId);
@@ -509,53 +531,109 @@ public class CollaborativeFilteringRBM {
 	
 	                    sum += wij.get(index, hid);
 	                }
-	            }
-	
+	            }	   
+	            //System.out.println(rat+" "+ index+" "+ sum);
 	            negdata.put(rat, index, sum);
 	        }
+	        
         }
         
         negdata = Utils.softmax(negdata);
+        this.getUserId();
         
         if(predictionType.equals(PredictionType.MAX)) {
         	
-        	DoubleMatrix finalRatings = DoubleMatrix.zeros(1, numdims);
-            
-        	
-        	
-            int max_index = 0;
-            double max_value = negdata.get(0,0);
+        	Map<String,Map<String,String>> finalRatings = new HashMap<>();
+           
+        	Map<String,String> temp=new  HashMap<String,String>();
             for(int index=0;index<matrix.getColumns();index++){
-	            
+            	int max_index = 0;
+            	double max_value = negdata.get(0,0);
 	            for(int i = 1; i < negdata.getRows(); i++ ) {
 	                double current = negdata.get(i,index);
 	                if(current > max_value) {
 	                    max_index = i;
 	                    max_value = current;
 	                }
-	            }
-	            finalRatings.put(0,index,(max_index + 1)*1.0);
+	            }	            
+	            temp.put(Index2feature.get(index), Double.toString((max_index + 1)*1.0));	            	            
 	        }
-            return finalRatings;
-                       
-        }
-        else if(predictionType.equals(PredictionType.MEAN)) {
+            HashMap<String, String> userMap = new HashMap<>(); 
+            userMap.put("id",email2userId.get(userId));
+            userMap.put("email",userId);
+            finalRatings.put("userId",userMap);
             
-            double mean = 0.0;
-                       
-            for(int i = 0; i < negdata.getRows(); i++ ) {
-
-                mean += negdata.get(i,0) * (i + 1);
-                
-            }
-            
+            finalRatings.put("rating",temp);
+            insertRatingsToMongoDB(finalRatings,email2userId.get(userId));
             return null;
-            
-            
+                       
         }
-        
         return null;
     }
+    
+    public void getUserId() throws Exception{
+    	
+	    try {
+	   email2userId =new HashMap<>();
+		Mongo mongo = new Mongo("ainuco.ddns.net", 4325);
+		DB db = mongo.getDB("iTravelDB");
+		DBCollection collection = db.getCollection("users");
+
+		// 3. Map example
+		System.out.println("Map example...");
+		
+		DBCursor cursorDocMap = collection.find();
+		while (cursorDocMap.hasNext()) {
+			DBObject temp = cursorDocMap.next();
+			email2userId.put(temp.get("email").toString(), temp.get("_id").toString());
+			
+		}
+		
+
+	    } catch (MongoException e) {
+		e.printStackTrace();
+	    }
+	    	
+    	
+    }
+	    
+    public void insertRatingsToMongoDB(Map<String,Map<String,String>> finalRatings,String userId) throws Exception{
+ 	
+	    try {
+
+		Mongo mongo = new Mongo("ainuco.ddns.net", 4325);
+		DB db = mongo.getDB("ita_hotel");
+		DBCollection collection = db.getCollection("UserPredictedRatings");
+
+		// 3. Map example
+		
+		BasicDBObject query=new BasicDBObject();
+		BasicDBObject field=new BasicDBObject();
+		query.put("userId.id", userId);
+		field.put(userId, 1);
+		DBCursor cursorDocMap = collection.find(query);
+		String mongoObjId="";
+		
+		if(cursorDocMap.hasNext()){
+			while (cursorDocMap.hasNext()) {
+				System.out.println("Map example...");
+				BasicDBObject obj=(BasicDBObject) cursorDocMap.next();
+				mongoObjId=obj.getString("_id");
+				BasicDBObject que=new BasicDBObject("_id",new ObjectId(mongoObjId));
+				//BasicDBObject updoc=new BasicDBObject(finalRatings);
+				obj.putAll(finalRatings);
+				collection.update(que,obj);
+			}
+		}
+		else{
+				collection.insert(new BasicDBObject(finalRatings));		
+		}
+		
+	    } catch (MongoException e) {
+		e.printStackTrace();
+	    	
+    	
+    }
                 
-                   
+    }                   
 }

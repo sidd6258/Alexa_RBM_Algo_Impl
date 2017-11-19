@@ -12,6 +12,8 @@ import genutils.RbmOptions;
 import java.io.IOException;
 import java.util.logging.Logger;
 
+import db.DbConnection;
+
 /**
  *
  * @author thanos
@@ -20,25 +22,25 @@ public class TestCollaborativeFilteringRBM {
     
     private static final Logger _logger = Logger.getLogger(TestCollaborativeFilteringRBM.class.getName());    
     
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
         
         
         _logger.info("Loading data..");        
                
         RbmOptions options = new RbmOptions();
-        options.maxepoch = 2;
+        options.maxepoch = 0;
         options.avglast = 5;
         options.numhid = 100;
         options.debug = false;
         
+        DbConnection.RatingsFileGen();
         //CollaborativeFilteringLayer fit = CollaborativeFilteringRBM.fit(data, options);
         CollaborativeFilteringRBM rbmCF = new CollaborativeFilteringRBM();
         rbmCF.loadRatings("./data/" + "booking.txt");
         
         rbmCF.fit(options);
         
-        System.out.println("Max prediction = " + rbmCF.predict("siddharth.gupta@sjsu.edu", "5a0e211af4896d0558d6433b", PredictionType.MAX));               
-        System.out.println("Mean prediction = " + rbmCF.predict("siddharth.gupta@sjsu.edu", "5a0e211af4896d0558d6433b", PredictionType.MEAN));               
+        System.out.println("Max prediction = " + rbmCF.predict("cidell0@disqus.com", "5a0e211af4896d0558d6433b", PredictionType.MAX));                              
        
     }
     
