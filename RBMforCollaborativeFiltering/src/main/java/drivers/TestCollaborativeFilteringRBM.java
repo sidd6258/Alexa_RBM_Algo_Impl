@@ -40,7 +40,7 @@ public class TestCollaborativeFilteringRBM {
         
         rbmCF.fit(options);
         
-        System.out.println("Max prediction = " + rbmCF.predict("cidell0@disqus.com", "5a0e211af4896d0558d6433b", PredictionType.MAX));                              
+        rbmCF.predict(PredictionType.MAX);                              
        
     }
     

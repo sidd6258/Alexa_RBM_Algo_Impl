@@ -469,10 +469,10 @@ public class CollaborativeFilteringRBM {
         
     }
 
-    public Map<String,Map<String,Double>> predict(String userId, String itemId, PredictionType predictionType) throws Exception {
+    public void predict(PredictionType predictionType) throws Exception {
 
-        int userIndex = user2Index.get(userId);
-        int itemIndex = feature2Index.get(itemId);
+       for(int userIndex=0;userIndex<user2Index.size();userIndex++){
+//        int itemIndex = feature2Index.get(itemId);
 
         DoubleMatrix user_ratings_so_far = this.matrix.getRow(userIndex);
                 
@@ -559,16 +559,15 @@ public class CollaborativeFilteringRBM {
 	            temp.put(Index2feature.get(index), Double.toString((max_index + 1)*1.0));	            	            
 	        }
             HashMap<String, String> userMap = new HashMap<>(); 
-            userMap.put("id",email2userId.get(userId));
-            userMap.put("email",userId);
+            userMap.put("id",email2userId.get(index2User.get(userIndex)));
+            userMap.put("email",index2User.get(userIndex));
             finalRatings.put("userId",userMap);
             
             finalRatings.put("rating",temp);
-            insertRatingsToMongoDB(finalRatings,email2userId.get(userId));
-            return null;
-                       
+            insertRatingsToMongoDB(finalRatings,email2userId.get(index2User.get(userIndex)));
+   
+        }         
         }
-        return null;
     }
     
     public void getUserId() throws Exception{
