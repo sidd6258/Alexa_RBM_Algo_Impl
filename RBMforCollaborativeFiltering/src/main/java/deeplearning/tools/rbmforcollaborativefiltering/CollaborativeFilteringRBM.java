@@ -469,7 +469,7 @@ public class CollaborativeFilteringRBM {
         
     }
 
-    public void predict(PredictionType predictionType) throws Exception {
+    public void predict(String module,PredictionType predictionType) throws Exception {
 
        for(int userIndex=0;userIndex<user2Index.size();userIndex++){
 //        int itemIndex = feature2Index.get(itemId);
@@ -564,7 +564,7 @@ public class CollaborativeFilteringRBM {
             finalRatings.put("userId",userMap);
             
             finalRatings.put("rating",temp);
-            insertRatingsToMongoDB(finalRatings,email2userId.get(index2User.get(userIndex)));
+            insertRatingsToMongoDB(module,finalRatings,email2userId.get(index2User.get(userIndex)));
    
         }         
         }
@@ -596,13 +596,13 @@ public class CollaborativeFilteringRBM {
     	
     }
 	    
-    public void insertRatingsToMongoDB(Map<String,Map<String,String>> finalRatings,String userId) throws Exception{
+    public void insertRatingsToMongoDB(String module,Map<String,Map<String,String>> finalRatings,String userId) throws Exception{
  	
 	    try {
 
 		Mongo mongo = new Mongo("ainuco.ddns.net", 4325);
-		DB db = mongo.getDB("ita_hotel");
-		DBCollection collection = db.getCollection("UserPredictedRatings");
+		DB db = mongo.getDB("iTravelDB");
+		DBCollection collection = db.getCollection("UserPredictedRatings_"+module);
 
 		// 3. Map example
 		

@@ -32,15 +32,25 @@ public class TestCollaborativeFilteringRBM {
         options.avglast = 5;
         options.numhid = 100;
         options.debug = false;
-        
-        DbConnection.RatingsFileGen();
-        //CollaborativeFilteringLayer fit = CollaborativeFilteringRBM.fit(data, options);
+       
+        DbConnection.RatingsFileGen("hotel");
         CollaborativeFilteringRBM rbmCF = new CollaborativeFilteringRBM();
-        rbmCF.loadRatings("./data/" + "booking.txt");
-        
+        rbmCF.loadRatings("./data/" + "hotel_booking.txt");
         rbmCF.fit(options);
+        rbmCF.predict("hotel",PredictionType.MAX);       
         
-        rbmCF.predict(PredictionType.MAX);                              
+        DbConnection.RatingsFileGen("car");
+        CollaborativeFilteringRBM rbmCF1 = new CollaborativeFilteringRBM();
+        rbmCF1.loadRatings("./data/" + "car_booking.txt");
+        rbmCF1.fit(options);
+        rbmCF1.predict("car",PredictionType.MAX);                              
+
+        DbConnection.RatingsFileGen("flight");
+        CollaborativeFilteringRBM rbmCF2 = new CollaborativeFilteringRBM();
+        rbmCF2.loadRatings("./data/" + "flight_booking.txt");
+        rbmCF2.fit(options);
+        rbmCF2.predict("flight",PredictionType.MAX);                              
+
        
     }
     

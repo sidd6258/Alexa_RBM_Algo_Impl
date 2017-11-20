@@ -31,7 +31,7 @@ public class DbConnection {
         }
 }
 	
-	public static void RatingsFileGen() throws IOException {
+	public static void RatingsFileGen(String module) throws IOException {
 	      try (
 	         // Step 1: Allocate a database 'Connection' object
 	         Connection conn = (Connection) DriverManager.getConnection(
@@ -43,7 +43,7 @@ public class DbConnection {
 	      ) {
 	         // Step 3: Execute a SQL SELECT query, the query result
 	         //  is returned in a 'ResultSet' object.
-	         String strSelect = "select * from booking";
+	         String strSelect = "select * from booking where module=\""+module+"\"";
 	         System.out.println("The SQL query is: " + strSelect); // Echo For debugging
 	         System.out.println();
 	 
@@ -63,7 +63,7 @@ public class DbConnection {
 	            data.add(str);
 	            ++rowCount;
 	         }
-	         writeToFile(data, "data/booking.txt");
+	         writeToFile(data, "data/"+module+"_booking.txt");
 	         rset.close();
 	         stmt.close();
 	         System.out.println("Total number of records added to file = " + rowCount);
