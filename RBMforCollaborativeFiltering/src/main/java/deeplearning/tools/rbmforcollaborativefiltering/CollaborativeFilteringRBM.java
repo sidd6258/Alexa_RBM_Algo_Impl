@@ -81,8 +81,95 @@ public class CollaborativeFilteringRBM {
      * @param rbmOptions
      * @return 
      */
-    public void fit(RbmOptions rbmOptions) throws IOException {
+                   
+    
+    /**
+     * Reads the file with the user-item ratings. The expected format is 
+     * 'user'<tab/>'item'<tab/>'rating
+     * @param file 
+     */
+    public void loadRatings(String file) {
+               
+        HashMap<String, List<Rating>> ratingsMap = new HashMap<>(10000);
+       
+        try {
+            BigFile f = new BigFile(file);
+            HashSet<String> items = new HashSet<String>(5000);   
+            
+            Iterator<String> iterator = f.iterator();            
+            while (iterator.hasNext()) {
+                String line = iterator.next();
+                String[] splits = line.split(" ");
+
+                String userId = splits[0];
+                String itemId = splits[1];
+                double rating = Double.parseDouble(splits[2]);
+
+                List<Rating> ratingsList = ratingsMap.get(userId);
+                if(ratingsList == null) {
+                    ratingsList = new ArrayList<>();
+                }
                 
+                ratingsList.add(new Rating(itemId, rating));
+                ratingsMap.put(userId, ratingsList);
+                items.add(itemId);
+            }
+
+            System.out.println("Found " + ratingsMap.keySet().size() + " users " +
+                    " and " + items.size() + " items..");
+            
+            // initialize all with zeros
+            this.matrix = DoubleMatrix.zeros(ratingsMap.keySet().size(), items.size());
+            
+            user2Index = new HashMap<>(ratingsMap.keySet().size());
+            index2User = new HashMap<>(ratingsMap.keySet().size());
+            
+            
+            int rowIndex = 0;
+            for(Map.Entry<String, List<Rating>> entry : ratingsMap.entrySet()) {
+                
+                String userId = entry.getKey();
+                user2Index.put(userId, rowIndex);
+                index2User.put(rowIndex, userId);
+                rowIndex++;
+            }
+            int usersNr = rowIndex;
+            
+            
+            int columnIndex = 0;
+            feature2Index = new HashMap<>(items.size());
+            Index2feature = new HashMap<>(items.size());
+            for(String item : items) {
+                
+                feature2Index.put(item, columnIndex);
+                Index2feature.put(columnIndex, item);
+                columnIndex++;
+            }
+                        
+            for(int row = 0; row < usersNr; row++) {
+                
+                String userId = index2User.get(row);
+                List<Rating> ratings = ratingsMap.get(userId);
+                for(Rating rating : ratings) {
+                    
+                    String item = rating.itemId;
+                    double val = rating.rating;
+                    
+                    matrix.put(row, feature2Index.get(item), val);                    
+                }                
+            }
+                  
+                         
+        } catch (Exception ex) {
+
+            ex.printStackTrace();
+        }
+        
+    }
+
+    
+    public void fit(RbmOptions rbmOptions) throws IOException {
+        
 
         int startAveraging = rbmOptions.maxepoch - rbmOptions.avglast;             
 
@@ -383,92 +470,8 @@ public class CollaborativeFilteringRBM {
         } // end of epoch
                           
     }
-                       
-    
-    /**
-     * Reads the file with the user-item ratings. The expected format is 
-     * 'user'<tab/>'item'<tab/>'rating
-     * @param file 
-     */
-    public void loadRatings(String file) {
-               
-        HashMap<String, List<Rating>> ratingsMap = new HashMap<>(10000);
-       
-        try {
-            BigFile f = new BigFile(file);
-            HashSet<String> items = new HashSet<String>(5000);   
-            
-            Iterator<String> iterator = f.iterator();            
-            while (iterator.hasNext()) {
-                String line = iterator.next();
-                String[] splits = line.split(" ");
-
-                String userId = splits[0];
-                String itemId = splits[1];
-                double rating = Double.parseDouble(splits[2]);
-
-                List<Rating> ratingsList = ratingsMap.get(userId);
-                if(ratingsList == null) {
-                    ratingsList = new ArrayList<>();
-                }
-                
-                ratingsList.add(new Rating(itemId, rating));
-                ratingsMap.put(userId, ratingsList);
-                items.add(itemId);
-            }
-
-            System.out.println("Found " + ratingsMap.keySet().size() + " users " +
-                    " and " + items.size() + " items..");
-            
-            // initialize all with zeros
-            this.matrix = DoubleMatrix.zeros(ratingsMap.keySet().size(), items.size());
-            
-            user2Index = new HashMap<>(ratingsMap.keySet().size());
-            index2User = new HashMap<>(ratingsMap.keySet().size());
-            
-            
-            int rowIndex = 0;
-            for(Map.Entry<String, List<Rating>> entry : ratingsMap.entrySet()) {
-                
-                String userId = entry.getKey();
-                user2Index.put(userId, rowIndex);
-                index2User.put(rowIndex, userId);
-                rowIndex++;
-            }
-            int usersNr = rowIndex;
-            
-            
-            int columnIndex = 0;
-            feature2Index = new HashMap<>(items.size());
-            Index2feature = new HashMap<>(items.size());
-            for(String item : items) {
-                
-                feature2Index.put(item, columnIndex);
-                Index2feature.put(columnIndex, item);
-                columnIndex++;
-            }
-                        
-            for(int row = 0; row < usersNr; row++) {
-                
-                String userId = index2User.get(row);
-                List<Rating> ratings = ratingsMap.get(userId);
-                for(Rating rating : ratings) {
-                    
-                    String item = rating.itemId;
-                    double val = rating.rating;
-                    
-                    matrix.put(row, feature2Index.get(item), val);                    
-                }                
-            }
-                  
-                         
-        } catch (Exception ex) {
-
-            ex.printStackTrace();
-        }
         
-    }
-
+    
     public void predict(String module,PredictionType predictionType) throws Exception {
 
        for(int userIndex=0;userIndex<user2Index.size();userIndex++){
