@@ -1,9 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package deeplearning.tools.rbmforcollaborativefiltering;
 
 import genutils.BigFile;
@@ -40,10 +34,6 @@ import com.mongodb.Mongo;
 import com.mongodb.MongoException;
 import com.mongodb.util.JSON;
 
-/**
- *
- * @author thanos
- */
 public class CollaborativeFilteringRBM {
     
    
@@ -74,20 +64,8 @@ public class CollaborativeFilteringRBM {
     HashMap<String, Integer> user2Index;    
     HashMap<Integer, String> index2User;
     HashMap<String, String> email2userId;
-    /**
-     * Fits a separate RBM for each user, with 'tied' weights and biases
-     * for the hidden and visible units. 
-     * @param matrix
-     * @param rbmOptions
-     * @return 
-     */
+   
                    
-    
-    /**
-     * Reads the file with the user-item ratings. The expected format is 
-     * 'user'<tab/>'item'<tab/>'rating
-     * @param file 
-     */
     public void loadRatings(String file) {
                
         HashMap<String, List<Rating>> ratingsMap = new HashMap<>(10000);
