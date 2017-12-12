@@ -5,10 +5,7 @@
  */
 package genutils;
 
-/**
- *
- * @author thanos
- */
+
 public class Rating {
     
     public String itemId;
