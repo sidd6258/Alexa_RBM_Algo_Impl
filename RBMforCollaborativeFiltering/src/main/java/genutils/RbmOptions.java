@@ -5,10 +5,6 @@
 package genutils;
 
 
-/**
- *
- * @author Thanos
- */
 public class RbmOptions {
     
     public int nclasses = 10;    
