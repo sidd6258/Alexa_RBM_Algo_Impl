@@ -14,11 +14,6 @@ import java.util.Map.Entry;
 import java.util.logging.Logger;
 import org.jblas.DoubleMatrix;
 
-
-/**
- *
- * @author Thanos
- */
 public class Utils {
     
     
