@@ -5,10 +5,7 @@
  */
 package deeplearning.tools.rbmforcollaborativefiltering;
 
-/**
- *
- * @author thanos
- */
+
 public enum PredictionType {
     
     MAX, 
